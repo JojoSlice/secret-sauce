@@ -27,15 +27,11 @@ jobs:
             echo "2. Click Settings → Secrets and variables → Actions"
             echo "3. Click 'New repository secret'"
             echo "4. Name: FAVORITE_NUMBER"
-            echo "5. Value: Your webhook URL (e.g., Slack, Discord, or any HTTP endpoint)"
             echo "6. Click 'Add secret'"
             echo ""
             echo "This workflow will continue but skip the notification step."
           else
             echo "✅ Secret 'FAVORITE_NUMBER' is configured"
-            echo ""
-            echo "Note: The secret value is automatically masked in logs."
-            echo "Even if we tried to print it, GitHub would replace it with ***"
           fi
 
       - name: Print secret
@@ -49,9 +45,29 @@ jobs:
 
           echo "The secret number is: ${{ secrets.FAVORITE_NUMBER }}"
 
-          name: Notify Discord
+      - name: Verify Discord webhook
+        id: check_discord
+        run: |
+          if [ -z "${{ secrets.DISCORD_WEBHOOK }}" ]; then
+            echo "⚠️  WARNING: Secret 'DISCORD_WEBHOOK' is not configured"
+            echo ""
+            echo "To set up this secret:"
+            echo "1. Go to your repository on GitHub"
+            echo "2. Click Settings → Secrets and variables → Actions"
+            echo "3. Click 'New repository secret'"
+            echo "4. Name: DISCORD_WEBHOOK"
+            echo "5. Value: Your Discord webhook URL"
+            echo "6. Click 'Add secret'"
+            echo ""
+            echo "Skipping Discord notification."
+            echo "discord_configured=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Secret 'DISCORD_WEBHOOK' is configured"
+            echo "discord_configured=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Send message to Discord
+        if: steps.check_discord.outputs.discord_configured == 'true'
         run: |
           curl -H "Content-Type: application/json" \
             -X POST \
