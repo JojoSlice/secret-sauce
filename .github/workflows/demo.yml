@@ -1,0 +1,59 @@
+name: send secret
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  demo_secret:
+    name: Demo of secrets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+
+      - name: Verify secret
+        run: |
+          if [ -z "${{ secrets.FAVORITE_NUMBER }}" ]; then
+            echo "⚠️  WARNING: Secret 'FAVORITE_NUMBER' is not configured"
+            echo ""
+            echo "To set up this secret:"
+            echo "1. Go to your repository on GitHub"
+            echo "2. Click Settings → Secrets and variables → Actions"
+            echo "3. Click 'New repository secret'"
+            echo "4. Name: FAVORITE_NUMBER"
+            echo "5. Value: Your webhook URL (e.g., Slack, Discord, or any HTTP endpoint)"
+            echo "6. Click 'Add secret'"
+            echo ""
+            echo "This workflow will continue but skip the notification step."
+          else
+            echo "✅ Secret 'FAVORITE_NUMBER' is configured"
+            echo ""
+            echo "Note: The secret value is automatically masked in logs."
+            echo "Even if we tried to print it, GitHub would replace it with ***"
+          fi
+
+      - name: Print secret
+        run: |
+          echo "=========================================================="
+          echo "              Github actions Secrets demo"
+          echo "=========================================================="
+          echo ""
+          echo " This workflow demos how to use secrets in Github Actions"
+          echo "=========================================================="
+
+          echo "The secret number is: ${{ secrets.FAVORITE_NUMBER }}"
+
+          name: Notify Discord
+
+      - name: Send message to Discord
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+          -d '{"content": "🚀 Iron dev message from: ${{ github.actor }}"}' \
+            ${{ secrets.DISCORD_WEBHOOK }}
